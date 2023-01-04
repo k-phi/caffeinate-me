@@ -1,15 +1,18 @@
 package caffeinateme.steps;
 
-import caffeinateme.model.CoffeeShop;
-import caffeinateme.model.Customer;
-import caffeinateme.model.Order;
-import caffeinateme.model.OrderStatus;
+import caffeinateme.model.*;
 import io.cucumber.java.ParameterType;
+import io.cucumber.java.en.And;
 import io.cucumber.java.en.Given;
 import io.cucumber.java.en.Then;
 import io.cucumber.java.en.When;
 
-import static org.assertj.core.api.Assertions.assertThat;
+import java.util.List;
+import java.util.Map;
+
+import static org.hamcrest.MatcherAssert.assertThat;
+import static org.hamcrest.Matchers.*;
+
 
 public class OrderCoffeeSteps {
     CoffeeShop coffeeShop = new CoffeeShop();
@@ -45,19 +48,34 @@ public class OrderCoffeeSteps {
 
     @Then("Barry should receive the order")
     public void barry_should_receive_the_order() {
-        assertThat(coffeeShop.getPendingOrders()).contains(order);
+        assertThat(coffeeShop.getPendingOrders(), hasItem(order));
     }
 
     @Then("^Barry should know that the order is (.*)")
     public void barry_should_know_that_the_order_is(OrderStatus expectedStatus) {
         Order cathysOrder = coffeeShop.getOrderFor(customer)
                 .orElseThrow(() -> new AssertionError("No order found!"));
-        assertThat(cathysOrder.getStatus()).isEqualTo(expectedStatus);
+        assertThat(cathysOrder.getStatus(), is(expectedStatus));
     }
 
     @Then("the order should have the comment {string}")
     public void order_should_have_comment(String comment) {
         Order order = coffeeShop.getOrderFor(customer).get();
-        assertThat(order.getComment()).isEqualTo(comment);
+        assertThat(order.getComment(), is(comment));
+    }
+
+    @When("Cathy places an order for the following items:")
+    public void cathyPlacesAnOrderForTheFollowingItems(List<Map<String, String>> items) {
+        List<OrderItem> orderItems = items.stream()
+                .map(row -> new OrderItem(row.get("Product"), Integer.parseInt(row.get("Quantity"))))
+                .toList();
+        this.order = new Order(orderItems, this.customer);
+        coffeeShop.placeOrder(this.order, 300);
+    }
+
+    @And("the order should contain {int} line items")
+    public void theOrderShouldContainLineItems(int expectedNumberOfLineItems) {
+        Order order = coffeeShop.getOrderFor(this.customer).get();
+        assertThat(order.getItems(), hasSize(expectedNumberOfLineItems));
     }
 }
