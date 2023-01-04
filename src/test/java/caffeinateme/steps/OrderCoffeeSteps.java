@@ -1,6 +1,7 @@
 package caffeinateme.steps;
 
 import caffeinateme.model.*;
+import io.cucumber.java.DataTableType;
 import io.cucumber.java.ParameterType;
 import io.cucumber.java.en.And;
 import io.cucumber.java.en.Given;
@@ -64,12 +65,14 @@ public class OrderCoffeeSteps {
         assertThat(order.getComment(), is(comment));
     }
 
+    @DataTableType
+    public OrderItem orderItem(Map<String, String> row) {
+        return new OrderItem(row.get("Product"), Integer.parseInt(row.get("Quantity")));
+    }
+
     @When("Cathy places an order for the following items:")
-    public void cathyPlacesAnOrderForTheFollowingItems(List<Map<String, String>> items) {
-        List<OrderItem> orderItems = items.stream()
-                .map(row -> new OrderItem(row.get("Product"), Integer.parseInt(row.get("Quantity"))))
-                .toList();
-        this.order = new Order(orderItems, this.customer);
+    public void cathyPlacesAnOrderForTheFollowingItems(List<OrderItem> items) {
+        this.order = new Order(items, this.customer);
         coffeeShop.placeOrder(this.order, 300);
     }
 
@@ -77,5 +80,12 @@ public class OrderCoffeeSteps {
     public void theOrderShouldContainLineItems(int expectedNumberOfLineItems) {
         Order order = coffeeShop.getOrderFor(this.customer).get();
         assertThat(order.getItems(), hasSize(expectedNumberOfLineItems));
+    }
+
+    @And("the order should contain the following products:")
+    public void theOrderShouldContainTheFollowingProducts(List<String> expectedProducts) {
+        Order order = coffeeShop.getOrderFor(this.customer).get();
+        List<String> products = order.getItems().stream().map(OrderItem::product).toList();
+        assertThat(products, equalTo(expectedProducts));
     }
 }
