@@ -4,12 +4,14 @@ import java.util.*;
 
 public class CoffeeShop {
 
-    private Queue<Order> orders = new LinkedList<>();
-    private Map<String, Customer> registeredCustomers = new HashMap<>();
+    private final Queue<Order> orders = new LinkedList<>();
+    private final Map<String, Customer> registeredCustomers = new HashMap<>();
 
     public void placeOrder(Order order, int distanceInMetres) {
         if (distanceInMetres <= 200) {
             order = order.withStatus(OrderStatus.Urgent);
+        } else if (distanceInMetres > 5000) {
+            order = order.withStatus(OrderStatus.Low);
         }
         orders.add(order);
     }
